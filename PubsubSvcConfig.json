@@ -1,0 +1,23 @@
+[
+{
+"albURL": "https://usalvwsunmaster.infor.com:29090",
+"AuthURL": "https://usalvwsunmaster.infor.com:29090/authorizationserver",
+"accesskey": "ilnzgG4SC-xodqxF_2lG",
+"secretkey": "tde34ebdhTUuAVuNEsic",
+"clientId": "5399ad465a4868692f175fedb3139ca1",
+"startIndex": 0,
+"count": 1,
+"clientType": "ifs",
+"adminUrl": "https://mingle-ci01-alb.mingle.awsdev.infor.com/mesconfigsvc",
+"indexUrl": "https://mingle-ci01-alb.mingle.awsdev.infor.com/mesindexsvc",
+"searchUrl": "https://mingle-ci01-alb.mingle.awsdev.infor.com/messearchsvc",
+"serviceType": "stsruntimesvc",
+"client_id": "9ce8f48e64c4a02a45d0cd249b3bf2aa",
+  
+"client_secret": "441639bfdf3bd0d651a61c72bc871fa0",
+"tenant": "infor",
+"AuthContext": "ContextVal",
+"userid": "Pranita",
+"clientIp": "10.0.0.1"
+}
+]
