@@ -1,0 +1,421 @@
+{
+	"info": {
+		"_postman_id": "b04668e5-1e06-44e2-93da-ee07db56a26e",
+		"name": "Pubsub svc",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "GET- Swagger",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "954e5b5f-f842-4320-b84f-cdddf7fe712f",
+						"type": "text/javascript",
+						"exec": [
+							"try",
+							"{",
+							"    if(responseCode.code===200)",
+							"    {",
+							"        var response = JSON.parse(responseBody);",
+							"        tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"        tests[\"info about service\"]=data.paths=responseBody.has(\"/v1/info\");",
+							"        ",
+							"        ",
+							"    }",
+							"    ",
+							"}",
+							"catch(e)",
+							"{",
+							"      console.log(\"Failed to get the wellknown endpoint details\" + e);",
+							"}"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{albURL}}/pubsubservice/v2/api-docs",
+					"host": [
+						"{{albURL}}"
+					],
+					"path": [
+						"pubsubservice",
+						"v2",
+						"api-docs"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST- Client registration",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "a166cf8d-0a42-4e74-85a5-3b1c7cb9d12c",
+						"type": "text/javascript",
+						"exec": [
+							"try",
+							"{",
+							"    if (responseCode.code === 200)",
+							"{",
+							"var data = JSON.parse(responseBody);",
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"tests[\"Body contains client_id\"] = responseBody.has(\"client_id\");",
+							"tests[\"Body contains client_secret\"] = responseBody.has(\"client_secret\");",
+							"tests[\"client_id is not null\"] = data.client_id !== (null);",
+							"tests[\"client_secret is not null\"] = data.client_secret !== (null);",
+							"pm.environment.set(\"client_Id1\", data.client_id);",
+							"pm.environment.set(\"client_Secret1\", data.client_secret);",
+							"console.log(\"Client  registration details\" + responseBody);",
+							"}",
+							"}",
+							"catch(e)",
+							"{",
+							"    console.log(\"Failed to execute client registration endpoint\" + e);",
+							"}",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "oauth1",
+					"oauth1": [
+						{
+							"key": "consumerSecret",
+							"value": "{{secretkey}}",
+							"type": "string"
+						},
+						{
+							"key": "consumerKey",
+							"value": "{{accesskey}}",
+							"type": "string"
+						},
+						{
+							"key": "token",
+							"value": "",
+							"type": "string"
+						},
+						{
+							"key": "addParamsToHeader",
+							"value": true,
+							"type": "boolean"
+						},
+						{
+							"key": "addEmptyParamsToSign",
+							"value": false,
+							"type": "boolean"
+						},
+						{
+							"key": "signatureMethod",
+							"value": "HMAC-SHA1",
+							"type": "string"
+						},
+						{
+							"key": "version",
+							"value": "1.0",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{albURL}}/authorizationserver/as/v1/api/clients/{{clientType}}",
+					"host": [
+						"{{albURL}}"
+					],
+					"path": [
+						"authorizationserver",
+						"as",
+						"v1",
+						"api",
+						"clients",
+						"{{clientType}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST-  Token Generation",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "70d9b400-d87d-44e6-aeb1-08573fefdcc8",
+						"type": "text/javascript",
+						"exec": [
+							"pm.environment.get(\"client_Id1\");",
+							"pm.environment.get(\"client_Secret1\");"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "d0842eb7-24eb-45b1-a664-a54cc59f9c49",
+						"type": "text/javascript",
+						"exec": [
+							"function parseJwt (token,expiresin) {",
+							"    var header = token.split('.')[0];",
+							"    var payload = token.split('.')[1];",
+							"            var headerdata = header.replace('-', '+').replace('_', '/');",
+							"            var payloaddata = payload.replace('-', '+').replace('_', '/');",
+							"    var headerstring = JSON.parse(atob(headerdata));",
+							"    var payloadstring = JSON.parse(atob(payloaddata));",
+							" var nbf = payloadstring.nbf;",
+							" var exp = payloadstring.exp;",
+							" var difference = exp - nbf;",
+							" tests[\"alg is RS512\"] = headerstring.alg === \"RS512\";",
+							" tests[\"exp-nbf is equal to expires_in\"] = (exp - nbf) === (expiresin);",
+							"}",
+							"try",
+							"{",
+							"var data = JSON.parse(responseBody);",
+							"pm.environment.set(\"access_token\", data.access_token);",
+							"var token = data.access_token;",
+							"var expiresin = data.expires_in;",
+							"parseJwt(token,expiresin);",
+							"tests[\"tokentype is Bearer\"] = data.token_type === \"Bearer\";",
+							"",
+							"}",
+							"catch (e)",
+							"{",
+							"    console.log(\"error \" + e);",
+							"}"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "client_credentials",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "{{client_Id1}}",
+							"type": "text"
+						},
+						{
+							"key": "client_secret",
+							"value": "{{client_Secret1}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{albURL}}/authorizationserver/as/v1/token",
+					"host": [
+						"{{albURL}}"
+					],
+					"path": [
+						"authorizationserver",
+						"as",
+						"v1",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST- Servicecredentials",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "f3534085-30b6-4c74-baf2-bf780406a95e",
+						"type": "text/javascript",
+						"exec": [
+							"pm.environment.get(\"access_token\");"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "9a8e2a4b-8d65-47af-9dc5-5261c1387227",
+						"type": "text/javascript",
+						"exec": [
+							"try",
+							"{",
+							"    if(responseCode.code===200)",
+							"    {",
+							"        var response = JSON.parse(responseBody);",
+							"        tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"        tests[\"Body has username\"]=responseBody.has(\"userName\");",
+							"        tests[\"Body has password\"]=responseBody.has(\"password\");",
+							"        tests[\"Body has publisher\"]=data.pub=responseBody.has(\"ifsgroups\");",
+							"         ",
+							"        ",
+							"    }",
+							"    ",
+							"}",
+							"catch(e)",
+							"{",
+							"      console.log(\"Failed to get service credentials\" + e);",
+							"}"
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-infor-authorization",
+						"value": "Bearer {{access_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {},
+				"url": {
+					"raw": "{{albURL}}/pubsubservice/v1/servicecredentials",
+					"host": [
+						"{{albURL}}"
+					],
+					"path": [
+						"pubsubservice",
+						"v1",
+						"servicecredentials"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST- Truststore",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "69cdf01c-15ba-45b5-ae0b-6a785413d41d",
+						"type": "text/javascript",
+						"exec": [
+							"try",
+							"{",
+							"    if(responseCode.code===200)",
+							"    {",
+							"        var response = JSON.parse(responseBody);",
+							"        tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"        tests[\"Body has publicKey\"]=responseBody.has(\"publicKey\");",
+							"        ",
+							"         ",
+							"        ",
+							"    }",
+							"    ",
+							"}",
+							"catch(e)",
+							"{",
+							"      console.log(\"error\" + e);",
+							"}"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-infor-authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"body": {},
+				"url": {
+					"raw": "{{albURL}}/pubsubservice/v1/truststore",
+					"host": [
+						"{{albURL}}"
+					],
+					"path": [
+						"pubsubservice",
+						"v1",
+						"truststore"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET- info",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "7f3ed3f9-f496-47df-ad4b-d7a4226bdfa4",
+						"type": "text/javascript",
+						"exec": [
+							"try",
+							"{",
+							"    if(responseCode.code===200)",
+							"    {",
+							"        var response = JSON.parse(responseBody);",
+							"        tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"        tests[\"Body has versionNumber\"]=responseBody.has(\"versionNumber\");",
+							"        tests[\"Body has buildNumber\"]=responseBody.has(\"buildNumber\");",
+							"        tests[\"Body has applicationName\"]=responseBody.has(\"applicationName\");",
+							"        tests[\"Body has buildDate\"]=responseBody.has(\"buildDate\");",
+							"        ",
+							"    }",
+							"    ",
+							"}",
+							"catch(e)",
+							"{",
+							"      console.log(\"error\" + e);",
+							"}"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{albURL}}/pubsubservice/v1/info",
+					"host": [
+						"{{albURL}}"
+					],
+					"path": [
+						"pubsubservice",
+						"v1",
+						"info"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
